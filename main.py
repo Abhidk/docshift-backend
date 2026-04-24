@@ -144,15 +144,26 @@ async def do_rotate(src, option, tmpdir):
 
 async def do_watermark(src, option, tmpdir):
     text = option or "CONFIDENTIAL"
-    out = os.path.join(tmpdir, "watermarked.pdf")
+    ps_file = os.path.join(tmpdir, "wm.ps")
+    wm_pdf  = os.path.join(tmpdir, "wm.pdf")
+    out     = os.path.join(tmpdir, "watermarked.pdf")
+    safe_text = text.replace("(", "[(]").replace(")", "[)]")
+    ps = (
+        "%!PS\n"
+        "/Helvetica findfont 48 scalefont setfont\n"
+        "0.7 setgray\n"
+        "200 300 translate 45 rotate\n"
+        "0 0 moveto\n"
+        "(" + safe_text + ") show\n"
+        "showpage\n"
+    )
+    with open(ps_file, "w") as fh:
+        fh.write(ps)
     run(["gs", "-dBATCH", "-dNOPAUSE", "-q", "-sDEVICE=pdfwrite",
-         f"-sOutputFile={out}",
-         "-c", f"<</BeginPage{{{/Helvetica findfont 48 scalefont setfont 0.7 setgray 200 300 translate 45 rotate 0 0 moveto ({text}) show}}>> setpagedevice",
-         "-f", src])
-    if not os.path.exists(out):
-        import shutil
-        shutil.copy(src, out)
-    return open(out,"rb").read(), "watermarked.pdf", "pdf"
+         f"-sOutputFile={wm_pdf}", ps_file])
+    run(["gs", "-dBATCH", "-dNOPAUSE", "-q", "-sDEVICE=pdfwrite",
+         f"-sOutputFile={out}", wm_pdf, src])
+    return open(out, "rb").read(), "watermarked.pdf", "pdf"
 
 async def do_protect(src, option, tmpdir):
     password = option or "password"
