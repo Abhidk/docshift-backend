@@ -7,13 +7,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-calc \
     libreoffice-impress \
     pandoc \
-    wkhtmltopdf \
     ghostscript \
     poppler-utils \
     qpdf \
-    pdftk-java \
     fonts-liberation \
     fonts-dejavu \
+    curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
